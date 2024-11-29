@@ -15,7 +15,7 @@ export async function middleware(request) {
     Redirect user to homepage if they try to access login page if already
     logged in
   */
-  if (token && request.nextUrl.pathname === "/auth") {
+  if (token && request.nextUrl.pathname === "/login") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 }

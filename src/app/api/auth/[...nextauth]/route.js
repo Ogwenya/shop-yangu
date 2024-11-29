@@ -1,6 +1,8 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { jwtVerify } from "jose";
+import bcrypt from "bcrypt";
+import { openDb } from "@/lib/db";
+import { SignJWT } from "jose";
 
 export const authOptions = {
   session: { strategy: "jwt" },
@@ -9,35 +11,40 @@ export const authOptions = {
       type: "credentials",
       credentials: {},
       async authorize(credentials, req) {
-        const { email, password } = credentials;
+        const db = await openDb();
+        const { username, password } = credentials;
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/v0/auth/login`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              email,
-              password,
-              account_type: "administrator",
-            }),
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
+        // Get user from database
+        const user = await db.get(
+          "SELECT * FROM users WHERE username = ?",
+          username
         );
 
-        const result = await res.json();
-
-        if (result.access_token) {
-          const { payload } = await jwtVerify(
-            result.access_token,
-            new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
-          );
-
-          return { payload, access_token: result.access_token };
-        } else {
-          throw new Error(result.message);
+        if (!user) {
+          throw new Error("Incorrect username");
         }
+
+        // Check password
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        if (!passwordMatch) {
+          throw new Error("Incorrect password");
+        }
+
+        // generate jwt token
+        const payload = {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        };
+
+        const access_token = await new SignJWT(payload)
+          .setProtectedHeader({ alg: "HS256" })
+          .setIssuedAt()
+          .setExpirationTime("24h")
+          .sign(new TextEncoder().encode(process.env.NEXTAUTH_SECRET));
+
+        return { payload, access_token };
       },
     }),
   ],
@@ -51,23 +58,11 @@ export const authOptions = {
 
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // Allows relative callback URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Allows callback URLs on the same origin
       else if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
-    async jwt({ token, trigger, user, session }) {
-      if (trigger === "update") {
-        const { payload } = await jwtVerify(
-          session,
-          new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
-        );
-
-        token.user = payload;
-        token.access_token = session;
-      }
-
+    async jwt({ token, user, session }) {
       if (user) {
         token.user = user.payload;
         token.access_token = user.access_token;
