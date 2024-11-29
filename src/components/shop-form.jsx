@@ -76,6 +76,7 @@ export default function ShopForm({ shop }) {
         set_error(null);
         set_modal_open(false);
         revalidate_data("shops");
+        revalidate_data(`shop-${shop.id}`);
       }
     } catch (error) {
       set_loading(false);
