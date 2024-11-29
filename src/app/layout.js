@@ -16,6 +16,8 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+export const revalidate = 600;
+
 export const metadata = {
   title: "ShopYangu Admin",
   description: "Admin panel for managing shops and products on ShopYangu",
