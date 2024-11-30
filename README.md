@@ -2,6 +2,8 @@
 
 A modern admin dashboard for managing shops, products, and orders on the ShopYangu platform. Built with Next.js 14, this dashboard provides a comprehensive interface for store administrators to manage their e-commerce operations.
 
+You can view the live demo site at [https://shop-yangu-nine.vercel.app](https://shop-yangu-nine.vercel.app)
+
 ## Features
 
 -  **Shop Management**: Create, edit, and manage multiple shops
