@@ -6,7 +6,7 @@ import path from "path";
 export async function openDb() {
   try {
     const db = await open({
-      filename: path.resolve(__dirname, "db.sqlite"),
+      filename: path.resolve(process.cwd(), "db.sqlite"),
       driver: sqlite3.Database,
     });
 
