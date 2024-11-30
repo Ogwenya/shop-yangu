@@ -155,7 +155,9 @@ export default function ShopForm({ shop }) {
             </div>
 
             {/* show the current shop image during editing */}
-            {shop && <Image src={shop?.logo} height={50} width={50} />}
+            {shop && (
+              <Image src={shop?.logo} alt="image" height={50} width={50} />
+            )}
           </div>
         </div>
         <DialogFooter>

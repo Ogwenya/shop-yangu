@@ -226,7 +226,7 @@ export default function ProductForm({ product, shop_id, shop_name, shops }) {
           {/* show the current product image during editing */}
           {product && (
             <div className="col-span-full">
-              <Image src={product?.image} height={50} width={50} />
+              <Image src={product?.image} alt="image" height={50} width={50} />
             </div>
           )}
         </div>
