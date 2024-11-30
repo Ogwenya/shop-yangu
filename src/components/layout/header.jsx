@@ -6,7 +6,7 @@ import { Sidebar } from "./sidebar";
 
 export function Header() {
   return (
-    <header className="flex-none flex items-center justify-between lg:justify-end h-14 lg:h-[60px] px-4 lg:px-6 border-b">
+    <header className="flex-none flex items-center justify-between lg:justify-end h-14 lg:h-[60px] px-4 lg:px-6 bg-primary text-primary-foreground">
       {/* small screen sidebar */}
       <Sheet>
         <SheetTrigger asChild>

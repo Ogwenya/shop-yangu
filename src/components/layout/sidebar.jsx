@@ -17,11 +17,11 @@ export function Sidebar({ screen }) {
   return (
     <ScrollArea
       className={`${
-        screen === "large" && "hidden lg:block border-r"
-      } h-screen overflow-y-scroll`}
+        screen === "large" && "hidden lg:block"
+      } h-screen overflow-y-scroll bg-primary text-primary-foreground`}
     >
       <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+        <div className="flex h-14 items-center px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             ShopYangu
           </Link>
@@ -31,8 +31,8 @@ export function Sidebar({ screen }) {
             {sidebar_items.map((item) => (
               <Link
                 href={item.url}
-                className={`rounded-lg hover:bg-primary hover:text-primary-foreground ${
-                  pathname === item.url && "bg-primary text-primary-foreground"
+                className={`rounded-lg hover:bg-primary-foreground hover:text-primary ${
+                  pathname === item.url && "bg-primary-foreground text-primary"
                 }  px-3 py-2 transition-all`}
                 key={item.name}
               >
