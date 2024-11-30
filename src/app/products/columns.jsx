@@ -1,12 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { Eye } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header";
-import ProductForm from "@/components/product-form";
-import { useEffect, useState } from "react";
-import DeleteProduct from "./delete-product";
+import ColumnActions from "./column-actions";
 
 export const columns = [
   {
@@ -68,24 +64,8 @@ export const columns = [
     id: "actions",
     cell: ({ row }) => {
       const product = row.original;
-      const [shops, setShops] = useState([]);
 
-      useEffect(() => {
-        async function fetchShops() {
-          const response = await fetch(`/api/shops`);
-          const data = await response.json();
-          setShops(data);
-        }
-        fetchShops();
-      }, []);
-
-      return (
-        <div className="flex items-center gap-3">
-          <ProductForm product={product} shops={shops} />
-
-          <DeleteProduct product={product} />
-        </div>
-      );
+      return <ColumnActions product={product} />;
     },
     size: 10,
   },
