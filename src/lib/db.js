@@ -1,11 +1,12 @@
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
+import path from "path";
 
 // Open SQLite database
 export async function openDb() {
   try {
     const db = await open({
-      filename: "./db.sqlite",
+      filename: path.resolve(__dirname, "db.sqlite"),
       driver: sqlite3.Database,
     });
 
