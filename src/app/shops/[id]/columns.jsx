@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header";
+import ColumnActions from "@/app/products/column-actions";
 
 export const columns = [
   {
@@ -49,5 +50,14 @@ export const columns = [
     ),
 
     size: 20,
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      const product = row.original;
+
+      return <ColumnActions product={product} shop_id={product.shop_id} />;
+    },
+    size: 10,
   },
 ];
