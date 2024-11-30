@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
+import { promises as fs } from "fs";
+import os from "os";
 import path from "path";
 import { openDb } from "@/lib/db";
-
+import { upload_image } from "@/lib/file-operations";
 //########################################
 // ########## FIND ALL PRODUCTS ##########
 //########################################
@@ -56,25 +57,39 @@ export async function POST(request) {
       });
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploads_dir = path.join(process.cwd(), "public/uploads");
+    // Generate unique temp file path
+    const tempPath = path.join(
+      os.tmpdir(),
+      `upload_${Date.now()}_${image.name}`
+    );
 
-    const image_data = await image.arrayBuffer();
+    // Write file buffer to temp location
+    const fileBuffer = await image.arrayBuffer();
+    await fs.writeFile(tempPath, Buffer.from(fileBuffer));
 
-    // Save image
-    const image_filename = `${Date.now()}-${image.name}`;
-    const image_path = path.join(uploads_dir, image_filename);
-    fs.writeFileSync(image_path, Buffer.from(image_data));
+    // Upload temp file
+    const result = await upload_image(tempPath);
+
+    // Clean up temp file
+    await fs.unlink(tempPath);
+
+    if (result.error) {
+      throw new Error(result.message);
+    }
+
+    const image_url = result.secure_url;
+    const image_public_id = result.public_id;
 
     await db.run(
-      "INSERT INTO product (name, description, price, stock_level, shop_id, image) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO product (name, description, price, stock_level, shop_id, image, image_public_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [
         name,
         description,
         price,
         stock_level,
         shop_id,
-        `/uploads/${image_filename}`,
+        image_url,
+        image_public_id,
       ]
     );
 

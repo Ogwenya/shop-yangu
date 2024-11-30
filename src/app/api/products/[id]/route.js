@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
+import os from "os";
+import { promises as fs } from "fs";
 import path from "path";
 import { openDb } from "@/lib/db";
+import { delete_image, upload_image } from "@/lib/file-operations";
 
 //##################################
 // ########## UPDATE PRODUCT ##########
@@ -31,32 +33,50 @@ export async function PATCH(request, { params }) {
       throw new Error("Product not found");
     }
 
-    let image_path = existing_product.image;
+    let image_url = existing_product.image;
+    let image_public_id = existing_product.image_public_id;
 
-    // if new image is provided, delete the previous one
     if (image) {
-      // Delete old image if it's not the default
-      const old_image_path = path.join(
-        process.cwd(),
-        "public",
-        existing_product.image
+      // Generate unique temp file path
+      const tempPath = path.join(
+        os.tmpdir(),
+        `upload_${Date.now()}_${image.name}`
       );
-      fs.unlinkSync(old_image_path);
 
-      // Save new image
-      const uploads_dir = path.join(process.cwd(), "public/uploads");
-      const image_data = await image.arrayBuffer();
-      const image_filename = `${Date.now()}-${image.name}`;
-      image_path = `/uploads/${image_filename}`;
+      // Write file buffer to temp location
+      const fileBuffer = await image.arrayBuffer();
+      await fs.writeFile(tempPath, Buffer.from(fileBuffer));
 
-      const new_image_path = path.join(uploads_dir, image_filename);
-      fs.writeFileSync(new_image_path, Buffer.from(image_data));
+      // Upload temp file
+      const result = await upload_image(tempPath);
+
+      // Clean up temp file
+      await fs.unlink(tempPath);
+
+      if (result.error) {
+        throw new Error(result.message);
+      }
+
+      image_url = result.secure_url;
+      image_public_id = result.public_id;
+
+      // Delete previous image
+      await delete_image(existing_product.image_public_id);
     }
 
     // Update shop in database
     await db.run(
-      "UPDATE product SET name = ?, description = ?, image = ?, price = ?, stock_level = ?, shop_id = ? WHERE id = ?",
-      [name, description, image_path, price, stock_level, shop_id, id]
+      "UPDATE product SET name = ?, description = ?, image = ?, image_public_id = ?, price = ?, stock_level = ?, shop_id = ? WHERE id = ?",
+      [
+        name,
+        description,
+        image_url,
+        image_public_id,
+        price,
+        stock_level,
+        shop_id,
+        id,
+      ]
     );
 
     const updated_product = await db.get("SELECT * FROM product WHERE id = ?", [
@@ -95,12 +115,7 @@ export async function DELETE(request, { params }) {
     }
 
     // Delete product image
-    const image_path = path.join(
-      process.cwd(),
-      "public",
-      existing_product.image
-    );
-    fs.unlinkSync(image_path);
+    await delete_image(existing_product.image_public_id);
 
     // Delete product from database
     await db.run("DELETE FROM product WHERE id = ?", [id]);

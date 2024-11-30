@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
+import os from "os";
+import { promises as fs } from "fs";
 import path from "path";
 import { openDb } from "@/lib/db";
+import { delete_image, upload_image } from "@/lib/file-operations";
 
 //###############################
 // ########## GET SHOP ##########
@@ -67,35 +69,45 @@ export async function PATCH(request, { params }) {
       throw new Error("Shop not found");
     }
 
-    let logo_path = existing_shop.logo;
+    let logo_url = existing_shop.logo;
+    let logo_public_id = existing_shop.logo_public_id;
 
-    // if new logo is provided, delete the previous one
     if (logo) {
-      const uploads_dir = path.join(process.cwd(), "public/uploads");
+      // Generate unique temp file path
+      const tempPath = path.join(
+        os.tmpdir(),
+        `upload_${Date.now()}_${logo.name}`
+      );
 
-      // Delete old logo if it's not the default
-      if (!existing_shop.logo.includes("default-shop.svg")) {
-        const old_logo_path = path.join(
-          process.cwd(),
-          "public",
-          existing_shop.logo
-        );
-        fs.unlinkSync(old_logo_path);
+      // Write file buffer to temp location
+      const fileBuffer = await logo.arrayBuffer();
+      await fs.writeFile(tempPath, Buffer.from(fileBuffer));
+
+      // Upload temp file
+      const result = await upload_image(tempPath);
+
+      // Clean up temp file
+      await fs.unlink(tempPath);
+
+      if (result.error) {
+        throw new Error(result.message);
       }
 
-      // Save new logo
-      const logo_data = await logo.arrayBuffer();
-      const logo_filename = `${Date.now()}-${logo.name}`;
-      logo_path = `/uploads/${logo_filename}`;
+      logo_url = result.secure_url;
+      logo_public_id = result.public_id;
 
-      const new_logo_path = path.join(uploads_dir, logo_filename);
-      fs.writeFileSync(new_logo_path, Buffer.from(logo_data));
+      // Delete previous logo if not default
+      const DEFAULT_IMAGE_PUBLIC_ID = process.env.DEFAULT_IMAGE_PUBLIC_ID;
+
+      if (existing_shop.logo_public_id !== DEFAULT_IMAGE_PUBLIC_ID) {
+        await delete_image(existing_shop.logo_public_id);
+      }
     }
 
     // Update shop in database
     await db.run(
-      "UPDATE shop SET name = ?, description = ?, logo = ? WHERE id = ?",
-      [name, description, logo_path, id]
+      "UPDATE shop SET name = ?, description = ?, logo = ?, logo_public_id = ? WHERE id = ?",
+      [name, description, logo_url, logo_public_id, id]
     );
 
     const updated_shop = await db.get("SELECT * FROM shop WHERE id = ?", [id]);
@@ -141,10 +153,11 @@ export async function DELETE(request, { params }) {
       });
     }
 
-    // Delete shop logo if not default
-    if (!existing_shop.logo.includes("default-shop.svg")) {
-      const logo_path = path.join(process.cwd(), "public", existing_shop.logo);
-      fs.unlinkSync(logo_path);
+    // Delete previous logo if not default
+    const DEFAULT_IMAGE_PUBLIC_ID = process.env.DEFAULT_IMAGE_PUBLIC_ID;
+
+    if (existing_shop.logo_public_id !== DEFAULT_IMAGE_PUBLIC_ID) {
+      await delete_image(existing_shop.logo_public_id);
     }
 
     // Delete shop from database
