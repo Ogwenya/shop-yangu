@@ -8,7 +8,7 @@ cloudinary.config({
 
 export async function upload_image(file) {
   try {
-    const image = await cloudinary.v2.uploader.upload(
+    const image = await cloudinary.uploader.upload(
       file,
       { folder: "shop_yangu" },
       (result) => result
@@ -22,7 +22,7 @@ export async function upload_image(file) {
 }
 
 export async function delete_image(public_id) {
-  const image = await cloudinary.v2.uploader.destroy(public_id);
+  const image = await cloudinary.uploader.destroy(public_id);
 
   return image;
 }

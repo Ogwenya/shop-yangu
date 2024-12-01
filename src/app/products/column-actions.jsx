@@ -22,7 +22,7 @@ const ColumnActions = ({ product, shop_id }) => {
         product={product}
         shops={shops}
         shop_id={shop_id}
-        shop_name={shops.find((shop) => shop.id === shop_id)?.name}
+        shop_name={shops.find((shop) => shop._id === shop_id)?.name}
       />
 
       <DeleteProduct product={product} />

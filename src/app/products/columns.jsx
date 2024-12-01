@@ -52,10 +52,15 @@ export const columns = [
     size: 20,
   },
   {
-    accessorKey: "shop_name",
+    accessorKey: "shop_id",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Shop" />
     ),
+    cell: ({ row }) => {
+      const shop = row.original.shop_id;
+
+      return shop.name;
+    },
 
     size: 20,
   },

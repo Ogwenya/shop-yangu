@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import os from "os";
 import { promises as fs } from "fs";
 import path from "path";
-import { openDb } from "@/lib/db";
+import { connectDB } from "@/lib/db";
 import { delete_image, upload_image } from "@/lib/file-operations";
+import Shop from "@/lib/models/shopModel";
+import Product from "@/lib/models/productModel";
 
 //###############################
 // ########## GET SHOP ##########
@@ -12,17 +14,10 @@ export async function GET(request, { params }) {
   const id = params.id;
 
   try {
-    const db = await openDb();
+    await connectDB();
 
     // get shop details
-    const shop = await db.get(
-      `SELECT shop.*, COUNT(product.id) as products_count 
-       FROM shop 
-       LEFT JOIN product ON shop.id = product.shop_id 
-       WHERE shop.id = ? 
-       GROUP BY shop.id`,
-      [id]
-    );
+    const shop = await Shop.findById(id).populate("products");
 
     if (!shop) {
       return NextResponse.json(
@@ -30,14 +25,6 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
-
-    // Get all products for this shop
-    const products = await db.all(`SELECT * FROM product WHERE shop_id = ?`, [
-      id,
-    ]);
-
-    // Add products to shop object
-    shop.products = products;
 
     return NextResponse.json(shop);
   } catch (error) {
@@ -53,7 +40,7 @@ export async function GET(request, { params }) {
 //##################################
 export async function PATCH(request, { params }) {
   try {
-    const db = await openDb();
+    await connectDB();
 
     const formData = await request.formData();
 
@@ -63,7 +50,7 @@ export async function PATCH(request, { params }) {
     const logo = formData.get("logo");
 
     // Get existing shop to check current logo
-    const existing_shop = await db.get("SELECT * FROM shop WHERE id = ?", [id]);
+    const existing_shop = await Shop.findById(id);
 
     if (!existing_shop) {
       throw new Error("Shop not found");
@@ -105,12 +92,12 @@ export async function PATCH(request, { params }) {
     }
 
     // Update shop in database
-    await db.run(
-      "UPDATE shop SET name = ?, description = ?, logo = ?, logo_public_id = ? WHERE id = ?",
-      [name, description, logo_url, logo_public_id, id]
-    );
-
-    const updated_shop = await db.get("SELECT * FROM shop WHERE id = ?", [id]);
+    const updated_shop = await Shop.findByIdAndUpdate(id, {
+      name,
+      description,
+      logo: logo_url,
+      logo_public_id,
+    });
 
     return NextResponse.json(updated_shop);
   } catch (error) {
@@ -126,12 +113,12 @@ export async function PATCH(request, { params }) {
 //##################################
 export async function DELETE(request, { params }) {
   try {
-    const db = await openDb();
+    await connectDB();
 
     const id = params.id;
 
     // Check if shop exists
-    const existing_shop = await db.get("SELECT * FROM shop WHERE id = ?", [id]);
+    const existing_shop = await Shop.findById(id).populate("products");
 
     if (!existing_shop) {
       return NextResponse.json({
@@ -141,12 +128,9 @@ export async function DELETE(request, { params }) {
     }
 
     // Check if shop has any products
-    const products_count = await db.get(
-      "SELECT COUNT(*) as count FROM product WHERE shop_id = ?",
-      [id]
-    );
+    const products_count = existing_shop.products.length;
 
-    if (products_count.count > 0) {
+    if (products_count > 0) {
       return NextResponse.json({
         error: true,
         message: "Cannot delete shop with existing products",
@@ -161,7 +145,7 @@ export async function DELETE(request, { params }) {
     }
 
     // Delete shop from database
-    await db.run("DELETE FROM shop WHERE id = ?", [id]);
+    await Shop.findByIdAndDelete(id);
 
     return NextResponse.json({ message: "Shop deleted successfully" });
   } catch (error) {

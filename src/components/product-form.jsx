@@ -72,7 +72,9 @@ export default function ProductForm({ product, shop_id, shop_name, shops }) {
       }
 
       //   set api url
-      const api_url = product ? `/api/products/${product.id}` : "/api/products";
+      const api_url = product
+        ? `/api/products/${product._id}`
+        : "/api/products";
 
       const res = await fetch(api_url, {
         method: product ? "PATCH" : "POST",
@@ -89,6 +91,8 @@ export default function ProductForm({ product, shop_id, shop_name, shops }) {
         if (!product) {
           set_name("");
           set_description("");
+          set_price("");
+          set_stock_level("");
         }
         set_image(null);
         set_error(null);
@@ -190,7 +194,7 @@ export default function ProductForm({ product, shop_id, shop_name, shops }) {
                 </SelectTrigger>
                 <SelectContent>
                   {shops.map((shop) => (
-                    <SelectItem key={shop.id} value={shop.id}>
+                    <SelectItem key={shop._id} value={shop._id}>
                       {shop.name}
                     </SelectItem>
                   ))}

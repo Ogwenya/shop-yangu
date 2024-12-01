@@ -39,10 +39,15 @@ export const columns = [
     },
   },
   {
-    accessorKey: "products_count",
+    accessorKey: "products",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Products Count" />
     ),
+    cell: ({ row }) => {
+      const products = row.original.products;
+
+      return products.length;
+    },
 
     size: 20,
   },
@@ -54,7 +59,7 @@ export const columns = [
 
       return (
         <div className="flex items-center gap-3">
-          <Link href={`/shops/${shop.id}`} className="h-fit">
+          <Link href={`/shops/${shop._id}`} className="h-fit">
             <Eye size={20} />
           </Link>
           <ShopForm shop={shop} />

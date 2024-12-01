@@ -27,7 +27,7 @@ const DeleteProduct = ({ product }) => {
 
       set_loading(true);
 
-      const res = await fetch(`/api/products/${product.id}`, {
+      const res = await fetch(`/api/products/${product._id}`, {
         method: "DELETE",
       });
 

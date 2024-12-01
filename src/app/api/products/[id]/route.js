@@ -2,15 +2,16 @@ import { NextResponse } from "next/server";
 import os from "os";
 import { promises as fs } from "fs";
 import path from "path";
-import { openDb } from "@/lib/db";
+import { connectDB } from "@/lib/db";
 import { delete_image, upload_image } from "@/lib/file-operations";
+import Product from "@/lib/models/productModel";
 
 //##################################
 // ########## UPDATE PRODUCT ##########
 //##################################
 export async function PATCH(request, { params }) {
   try {
-    const db = await openDb();
+    await connectDB();
 
     const id = params.id;
 
@@ -24,10 +25,7 @@ export async function PATCH(request, { params }) {
     const image = formData.get("image");
 
     // Get existing product to check current image
-    const existing_product = await db.get(
-      "SELECT * FROM product WHERE id = ?",
-      [id]
-    );
+    const existing_product = await Product.findById(id);
 
     if (!existing_product) {
       throw new Error("Product not found");
@@ -65,23 +63,15 @@ export async function PATCH(request, { params }) {
     }
 
     // Update shop in database
-    await db.run(
-      "UPDATE product SET name = ?, description = ?, image = ?, image_public_id = ?, price = ?, stock_level = ?, shop_id = ? WHERE id = ?",
-      [
-        name,
-        description,
-        image_url,
-        image_public_id,
-        price,
-        stock_level,
-        shop_id,
-        id,
-      ]
-    );
-
-    const updated_product = await db.get("SELECT * FROM product WHERE id = ?", [
-      id,
-    ]);
+    const updated_product = await Product.findByIdAndUpdate(id, {
+      name,
+      description,
+      image: image_url,
+      image_public_id,
+      price,
+      stock_level,
+      shop_id,
+    });
 
     return NextResponse.json(updated_product);
   } catch (error) {
@@ -97,15 +87,12 @@ export async function PATCH(request, { params }) {
 //##################################
 export async function DELETE(request, { params }) {
   try {
-    const db = await openDb();
+    await connectDB();
 
     const id = params.id;
 
     // Check if product exists
-    const existing_product = await db.get(
-      "SELECT * FROM product WHERE id = ?",
-      [id]
-    );
+    const existing_product = await Product.findById(id);
 
     if (!existing_product) {
       return NextResponse.json({
@@ -118,7 +105,7 @@ export async function DELETE(request, { params }) {
     await delete_image(existing_product.image_public_id);
 
     // Delete product from database
-    await db.run("DELETE FROM product WHERE id = ?", [id]);
+    await Product.findByIdAndDelete(id);
 
     return NextResponse.json({ message: "Product deleted successfully" });
   } catch (error) {

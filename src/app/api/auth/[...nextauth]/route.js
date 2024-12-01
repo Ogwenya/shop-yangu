@@ -1,8 +1,9 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
-import { openDb } from "@/lib/db";
 import { SignJWT } from "jose";
+import User from "@/lib/models/userModel";
+import { connectDB } from "@/lib/db";
 
 export const authOptions = {
   session: { strategy: "jwt" },
@@ -11,14 +12,12 @@ export const authOptions = {
       type: "credentials",
       credentials: {},
       async authorize(credentials, req) {
-        const db = await openDb();
+        await connectDB();
+
         const { username, password } = credentials;
 
         // Get user from database
-        const user = await db.get(
-          "SELECT * FROM users WHERE username = ?",
-          username
-        );
+        const user = await User.findOne({ username });
 
         if (!user) {
           throw new Error("Incorrect username");
@@ -33,7 +32,7 @@ export const authOptions = {
 
         // generate jwt token
         const payload = {
-          id: user.id,
+          id: user._id,
           username: user.username,
           email: user.email,
         };

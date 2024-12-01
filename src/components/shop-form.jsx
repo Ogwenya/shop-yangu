@@ -54,7 +54,7 @@ export default function ShopForm({ shop }) {
       }
 
       //   set api url
-      const api_url = shop ? `/api/shops/${shop.id}` : "/api/shops";
+      const api_url = shop ? `/api/shops/${shop._id}` : "/api/shops";
 
       const res = await fetch(api_url, {
         method: shop ? "PATCH" : "POST",
@@ -76,7 +76,7 @@ export default function ShopForm({ shop }) {
         set_error(null);
         set_modal_open(false);
         revalidate_data("shops");
-        revalidate_data(`shop-${shop.id}`);
+        revalidate_data(`shop-${shop._id}`);
       }
     } catch (error) {
       set_loading(false);

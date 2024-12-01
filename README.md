@@ -16,7 +16,7 @@ You can view the live demo site at [https://shop-yangu-nine.vercel.app](https://
 - [Next.js 14](https://nextjs.org/) - React framework
 - [Tailwind CSS](https://tailwindcss.com/) - CSS framework
 - [NextAuth.js](https://next-auth.js.org/) - Authentication
-- [SQLite](https://www.sqlite.org/) - Database
+- [MongoDB](https://www.mongodb.com/) - Database
 - [Cloudinary](https://cloudinary.com/) - Image storage
 - [shadcn/ui](https://ui.shadcn.com/) - UI components
 - [Recharts](https://recharts.org/) - Charts and analytics

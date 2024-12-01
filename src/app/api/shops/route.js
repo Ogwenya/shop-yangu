@@ -2,22 +2,18 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
-import { openDb } from "@/lib/db";
+import { connectDB } from "@/lib/db";
 import { upload_image } from "@/lib/file-operations";
+import Shop from "@/lib/models/shopModel";
+import Product from "@/lib/models/productModel";
 
 //#####################################
 // ########## FIND ALL SHOPS ##########
 //#####################################
 export async function GET() {
   try {
-    const db = await openDb();
-
-    const shops = await db.all(`
-      SELECT shop.*, COUNT(product.id) as products_count 
-      FROM shop
-      LEFT JOIN product ON shop.id = product.shop_id
-      GROUP BY shop.id
-    `);
+    await connectDB();
+    const shops = await Shop.find({}).populate("products");
 
     return NextResponse.json(shops);
   } catch (error) {
@@ -33,7 +29,7 @@ export async function GET() {
 //##################################
 export async function POST(request) {
   try {
-    const db = await openDb();
+    await connectDB();
 
     const data = await request.formData();
 
@@ -42,9 +38,7 @@ export async function POST(request) {
     const logo = data.get("logo");
 
     // Check if shop name already exists
-    const existing_shop = await db.get("SELECT * FROM shop WHERE name = ?", [
-      name,
-    ]);
+    const existing_shop = await Shop.findOne({ name });
 
     if (existing_shop) {
       return NextResponse.json({
@@ -88,12 +82,12 @@ export async function POST(request) {
     }
 
     // Save shop to database
-    await db.run(
-      "INSERT INTO shop (name, description, logo_public_id, logo) VALUES (?, ?, ?, ?)",
-      [name, description, logo_public_id, logo_url]
-    );
-
-    const shop = await db.get("SELECT * FROM shop WHERE name = ?", [name]);
+    const shop = await Shop.create({
+      name,
+      description,
+      logo_public_id,
+      logo: logo_url,
+    });
 
     return NextResponse.json(shop);
   } catch (error) {

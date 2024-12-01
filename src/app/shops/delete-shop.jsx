@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import SubmitButton from "@/components/ui/submit-button";
-import { Button } from "@/components/ui/button";
 import revalidate_data from "@/app/actions";
 
 const DeleteShop = ({ shop }) => {
@@ -26,7 +25,7 @@ const DeleteShop = ({ shop }) => {
     try {
       set_error(null);
 
-      if (shop.products_count > 0) {
+      if (shop.products.length > 0) {
         set_error(
           "Shop has products. Delete products or transfer them to other shops first."
         );
@@ -34,7 +33,7 @@ const DeleteShop = ({ shop }) => {
       }
       set_loading(true);
 
-      const res = await fetch(`/api/shops/${shop.id}`, {
+      const res = await fetch(`/api/shops/${shop._id}`, {
         method: "DELETE",
       });
 

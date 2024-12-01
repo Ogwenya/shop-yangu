@@ -2,22 +2,20 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
-import { openDb } from "@/lib/db";
+import { connectDB } from "@/lib/db";
 import { upload_image } from "@/lib/file-operations";
+import Product from "@/lib/models/productModel";
+import Shop from "@/lib/models/shopModel";
 //########################################
 // ########## FIND ALL PRODUCTS ##########
 //########################################
 export async function GET() {
   try {
-    const db = await openDb();
+    await connectDB();
 
-    const products = await db.all(`
-      SELECT product.*, shop.name as shop_name 
-      FROM product
-      LEFT JOIN shop ON shop.id = product.shop_id
-    `);
+    const products = await Product.find({}).populate("shop_id");
 
-    const shops = await db.all(`SELECT * FROM shop`);
+    const shops = await Shop.find({}).populate("products");
 
     return NextResponse.json({ products, shops });
   } catch (error) {
@@ -33,7 +31,7 @@ export async function GET() {
 //#####################################
 export async function POST(request) {
   try {
-    const db = await openDb();
+    await connectDB();
 
     const data = await request.formData();
 
@@ -45,10 +43,7 @@ export async function POST(request) {
     const image = data.get("image");
 
     // Check if product name already exists
-    const existing_product = await db.get(
-      "SELECT * FROM product WHERE name = ?",
-      [name]
-    );
+    const existing_product = await Product.findOne({ name });
 
     if (existing_product) {
       return NextResponse.json({
@@ -80,22 +75,15 @@ export async function POST(request) {
     const image_url = result.secure_url;
     const image_public_id = result.public_id;
 
-    await db.run(
-      "INSERT INTO product (name, description, price, stock_level, shop_id, image, image_public_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [
-        name,
-        description,
-        price,
-        stock_level,
-        shop_id,
-        image_url,
-        image_public_id,
-      ]
-    );
-
-    const product = await db.get("SELECT * FROM product WHERE name = ?", [
+    const product = await Product.create({
       name,
-    ]);
+      description,
+      price,
+      stock_level,
+      shop_id,
+      image: image_url,
+      image_public_id,
+    });
 
     return NextResponse.json(product);
   } catch (error) {

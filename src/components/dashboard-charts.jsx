@@ -31,9 +31,10 @@ export default function DashboardCharts({ shops, products }) {
   //   calculate stock levels for each shop
   const shopStockLevels = shops.map((shop) => ({
     name: shop.name,
-    stockLevel: products
-      .filter((product) => product.shop_id === shop.id)
-      .reduce((sum, product) => sum + product.stock_level, 0),
+    stockLevel: shop.products.reduce(
+      (sum, product) => sum + product.stock_level,
+      0
+    ),
   }));
 
   //   get top 5 shops by stock level

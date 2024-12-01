@@ -28,7 +28,9 @@ export default async function ShopDetails({ params }) {
         <DataTable
           columns={columns}
           data={shop.products}
-          other_button={<ProductForm shop_id={shop.id} shop_name={shop.name} />}
+          other_button={
+            <ProductForm shop_id={shop._id} shop_name={shop.name} />
+          }
         />
       </div>
     </section>
