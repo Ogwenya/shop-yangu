@@ -46,6 +46,7 @@ CLOUDINARY_API_KEY="your_cloudinary_api_key"
 CLOUDINARY_API_SECRET="your_cloudinary_api_secret"
 DEFAULT_IMAGE_PUBLIC_ID="your_default_image_public_id"
 DEFAULT_IMAGE="your_default_image_url"
+MONGO_URI="your_mongodb_uri"
 ```
 
 4. Start the development server:
